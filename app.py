@@ -26,12 +26,12 @@ def registraCliente():
     nome = st.text_input("Nome:", "", key="nome-cliente")
     responsavel = st.text_input("Responsável:", "", key="responsavel-cliente")
     tel = st.text_input("Telefone:", "", key="tel-cliente")
-    if st.button("Criar Cliente"):
+    if st.button("Criar Cliente", on_click=limpa_formulario):
         if nome in df_clientes["Nome"].values:
             st.error("Cliente já cadastrado")
             return
         try:
-            cliente = Cliente(nome=nome, responsavel=responsavel, tel=tel, instalacoes=[])
+            cliente = Cliente(nome=nome, responsavel=responsavel, tel=tel, instalacoes={})
             st.success("Cliente criado com sucesso!")
             df_clientes.loc[len(df_clientes)] = {"ID":len(df_clientes)+1,
                                                  "Cliente":cliente,
@@ -40,7 +40,6 @@ def registraCliente():
                                                  "Telefone":cliente.getTel(),
                                                  "Instalações":cliente.getInstalacoes()}
             salvaClientes(df_clientes)
-            limpa_formulario()
         except Exception as e:
             st.error(f"Erro ao criar cliente: {e}")
 
@@ -55,7 +54,7 @@ def registraInstalacao(cliente:Cliente):
     nome = st.text_input("Nome:", "", key="nome-instalacao")
     endereco = st.text_input("Endereço:", "",key= "endereco-intalacao")
     gps = st.text_input("GPS:", "", key="gps-instalacao")
-    if st.button("Registrar Instalação"):
+    if st.button("Registrar Instalação", on_click=limpa_formulario):
         if nome in [instalacao for instalacao in cliente.getInstalacoes()]:
             st.error("Instalação já cadastrada")
             return
@@ -64,37 +63,48 @@ def registraInstalacao(cliente:Cliente):
             cliente.criar_intalacao(instalacao)
             st.success("Instalação registrada com sucesso!")
             salvaClientes(df_clientes)
-            limpa_formulario()
         except Exception as e:
             st.error(f"Erro ao registrar instalação: {e}")
 
-def registraAndar(instalacao:Instalacoes):
+def registraAndar(cliente:Cliente,instalacao:Instalacoes):
     def limpa_formulario():
         st.session_state["nome-andar"] = ""
 
     st.title("Registro de Divisão/Andar")
     st.write('Digite o nome da divisão ou o número do andar')
     nome_andar = st.text_input("Nome da divisão/andar:", "",key="nome-andar")
-    if st.button("Registrar Divisão/Andar"):
+    if st.button("Registrar Divisão/Andar", on_click=limpa_formulario):
         if nome_andar in [andar.getNome() for andar in instalacao.getAndares()]:
             st.error("Divisão/Andar já cadastrada")
             return
         andar = Andar(nome=nome_andar, portas=[], controladoras=[])
-        instalacao.criaAndar(andar)
-        st.success("Divisão/Andar registrada com sucesso!")
-        st.success("Selecione a aba portas e controladora para incluir portas e controladoras nos andares/divisões criados")
-        salvaClientes(df_clientes)
-        limpa_formulario()
-
+        andar_criado = False
+        for inst in cliente.getInstalacoes():
+            if inst.getNome() == instalacao.getNome():
+                cliente._instalacoes[cliente.getInstalacoes().index(inst)]._andares.append(andar)
+                andar_criado = True
+        #cliente._instalacoes[cliente.getInstalacoes().index(instalacao)]._andares.append(andar)
+        st.write("mudança_feita")
+        if andar_criado:
+            st.success("Divisão/Andar registrada com sucesso!")
+            st.success("Selecione a aba portas e controladora para incluir portas e controladoras nos andares/divisões criados")
+            salvaClientes(df_clientes)
+        else:
+            st.error("Erro ao registrar divisão/andar")
+            return
 
 def selecionaAndar():
     cliente_opt = st.selectbox("Cliente:", df_clientes["Nome"].to_list())
     cliente = df_clientes[df_clientes["Nome"] == cliente_opt].iloc[0]["Cliente"]
     opt_instalacao = st.selectbox("Instalações:", cliente.getInstalacoes())
-    instalacao = opt_instalacao
-    opt_andar = st.selectbox("Andar:", instalacao.getAndares())
-    andar = opt_andar
-    return andar
+    list_andares = opt_instalacao.getAndares()
+    if list_andares == []:
+        st.write("Lista de andares vazia vai em clientes para registrar andares e divisões")
+        return False
+    else:
+        opt_andar = st.selectbox("Andar:", opt_instalacao.getAndares())
+        return opt_andar
+    
 
 def limpa_formulario_controladora():
     st.session_state["local-ctrl"] = ""
@@ -185,7 +195,10 @@ if option == "Cliente":
                 registraInstalacao(cliente)
             else:
                 instalacao = opt_instalacao
-                registraAndar(instalacao)
+                if instalacao.getAndares() == []:
+                    registraAndar(cliente,instalacao)
+                else:
+                    opt_andar = st.selectbox("Escolha o Andar", instalacao.getAndares())
 
 
 elif option == "Controladora":
@@ -198,12 +211,12 @@ elif option == "Controladora":
     ip = st.text_input("IP:", "", key= "ip-ctrl")
     mascara = st.text_input("Máscara de Sub-rede:", "", key= "mascara-ctrl")
     gateway = st.text_input("Gateway:", "", key= "gateway-ctrl")
-    tec = st.text_input("Técnico:", "", tec= "tec-ctrl")
+    tec = st.text_input("Técnico:", "", key= "tec-ctrl")
     data_compra = st.date_input("Data de Compra:", key= "data-compra-ctrl")
     data_instalacao = st.date_input("Data de Instalação:", key= "data-inst-ctrl")
     temp_garantia = st.number_input("Tempo de Garantia (meses):", min_value=3, key= "garantia-ctrl")
     
-    if st.button("Criar Controladora"):
+    if st.button("Criar Controladora", on_click=limpa_formulario_controladora):
         try:
             bateria = Bateria(marca="teste", modelo="teste", local="teste")
             controladora = Controladora(local=local, 
@@ -223,7 +236,6 @@ elif option == "Controladora":
             st.write(controladora)
             andar.criaControladora(controladora)
             salvaClientes(df_clientes)
-            limpa_formulario_controladora()
         except Exception as e:
             st.error(f"Erro ao criar controladora: {e}")
 
@@ -384,11 +396,10 @@ elif option == "Porta":
 
     
     try:
-        if st.button("Criar Porta"):
+        if st.button("Criar Porta", on_click=limpa_formulario_porta):
             porta = Porta(nome=nome, botoeira_emerg=botoeira, ima=ima, leitor_entrada=leitor_entrada, leitor_saida=leitor_saida)
             st.success("Porta criada com sucesso!")
             andar.criaPorta(porta)
-            limpa_formulario_porta()
             salvaClientes(df_clientes)
     except Exception as e:
         st.error(f"Erro ao criar porta: {e}")

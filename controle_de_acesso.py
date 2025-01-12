@@ -287,7 +287,7 @@ Tensão de Carregamento: {self.getTensaoCarregamento()}"""
             self._data_ultima_manutencao = datetime.strptime(data, "%d-%m-%Y")
         elif isinstance(data,datetime):
             self._data_ultima_manutencao = data
-            
+
         self._tec_ultima_manutencao = tec
         if defeito:
             self._setUltimoDefeito(self.getDataUltimaManutencao(),defeito)
@@ -624,6 +624,11 @@ class Controladora(FonteTimer,Equipamento):
         self._portas = portas
         self._nome = nome
         self._data_ultima_manutencao = self._data_instalacao
+
+    def getNome(self)->str:
+        return self._nome
+    def setNome(self,nome:str):
+        self._nome = nome
 
     def getPortas(self)->list[Porta]:
         """Retorna lista de portas"""
