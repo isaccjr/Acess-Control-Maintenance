@@ -594,6 +594,9 @@ class Porta:
         Recebe objeto leitor
         """
         self._leitor_entrada = leitor
+    def __str__(self):
+        return self.__dict__.__str__()
+
 
 class Controladora(FonteTimer,Equipamento):
     """Classe Controladora
