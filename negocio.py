@@ -5,7 +5,7 @@ from controle_de_acesso import Controladora
     
 class Andar:
     def __init__(self, nome:str,portas:dict[str,Porta],controladoras:dict[str,Controladora]):
-        self._nome = nome,
+        self._nome = nome
         self._portas = portas
         self._controladoras = controladoras
 
@@ -30,11 +30,8 @@ class Andar:
         else:
             raise TypeError("O argumento deve ser do tipo Controladora")
         
-    def listaControladoras(self):
-        controladoras = []
-        for controladora in self._controladoras:
-            controladoras.append(controladora.getLocal())
-        return controladoras
+    def getControladoras(self):
+        return self._controladoras
 
     def __str__(self):
         return self._nome
@@ -64,13 +61,20 @@ class Instalacoes:
     def getAndares(self)->dict[str,Andar]:
         return self._andares
     
-    def criaAndar(self,andar):
+    def criaAndar(self,andar:Andar):
         try:
             if isinstance(andar,Andar):
                 self._andares[andar.getNome()] = andar
                 return True
             else:
                 return False
+        except:
+            return False
+    
+    def delAndar(self,nome):
+        try:
+            del self._andares[nome]
+            return True
         except:
             return False
     

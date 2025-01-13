@@ -93,14 +93,16 @@ class Equipamento:
         """Retorna se o equipamento é AC ou DC"""
         return self._dc
     
-    def getTempGarantia(self):
+    def getTempGarantia(self)->int:
         return self._temp_garantia
-    
+    def _setTempGarantia(self,temp_garantia:int):
+        self._temp_garantia = temp_garantia
+
     def getInstalador(self)->str:
         """Método que retorna o nome do instalador do equipamento"""
         return self._instalador
     
-    def _setInstalador(self,instalador):
+    def _setInstalador(self,instalador:str):
         self._instalador = instalador
     
     def getCompra(self):
@@ -109,6 +111,11 @@ class Equipamento:
             return self._data_compra
         else:
             return f"Não foi definida a data de compra do(a) {self.getTipoEquipamento()}"
+    def _setCompra(self,data_compra):
+        if isinstance(data_compra,str):
+                self._data_compra = datetime.strptime(data_compra, "%d-%m-%Y")
+        elif isinstance(data_compra,datetime):
+            self._data_compra = data_compra
     
     def getInstalacao(self):
         """Método que retorna a data de instalação"""
@@ -116,7 +123,12 @@ class Equipamento:
             return self._data_instalacao
         except:
             return f"Não foi definida a data de instalação do(a) {self.getTipoEquipamento()}"
-        
+    def _setInstalacao(self,data_instalacao):
+        if isinstance(data_instalacao,str):
+            self._data_instalacao = datetime.strptime(data_instalacao, "%d-%m-%Y")
+        elif isinstance(data_instalacao,datetime):
+            self._data_instalacao = data_instalacao
+    
     def getDataUltimaManutencao(self):
         try:
             return self._data_ultima_manutencao
