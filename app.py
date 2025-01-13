@@ -287,37 +287,37 @@ def opcao_cliente():
                         if st.button('REGISTRAR CONTROLADORA', use_container_width=True):
                             pass
 
-def expander_botoeira():
+def expander_botoeira(local):
     with st.expander("Botoeira de Emergência", expanded=True):
         opt_botoeira = st.selectbox("Botoeira de Emergência", ["Padrão"])
-        tec_bot = st.text_input("Técnico:", "",key= "tec-bot")
-        data_compra_bot = st.date_input("Data de Compra:", value=date.today(), key="data-compra-bot")
-        data_instalacao_bot = st.date_input("Data de Instalação:",value=date.today(), key= "data-inst-bot")
-        temp_garantia_bot = st.number_input("Tempo de Garantia (meses):", value=3, min_value=3,key= "garantia-bot")
+        tec_bot = st.text_input("Técnico:", "",key= f"tec-bot-{local}")
+        data_compra_bot = st.date_input("Data de Compra:", value=date.today(), key=f"data-compra-bot-{local}")
+        data_instalacao_bot = st.date_input("Data de Instalação:",value=date.today(), key= f"data-inst-bot-{local}")
+        temp_garantia_bot = st.number_input("Tempo de Garantia (meses):", value=3, min_value=3,key= f"garantia-bot-{local}")
     st.markdown("---")
     return opt_botoeira,tec_bot,data_compra_bot,data_instalacao_bot,temp_garantia_bot
 
-def expander_ima():
+def expander_ima(local):
     with st.expander("Imã", expanded=True):
         opt_ima = st.selectbox("Eletroimã", ["Padrão 150kgf", "Padrão 300kgf"])
-        inst_ima = st.text_input("Técnico:", "",key= "inst-ima")
-        data_compra_ima = st.date_input("Data de Compra:",value=date.today(),key= "data-compra-ima")
-        data_instalacao_ima = st.date_input("Data de Instalação:",value=date.today(),key= "data-inst-ima")
-        temp_garantia_ima = st.number_input("Tempo de Garantia (meses):", value=3, min_value=3,key= "garantia-ima")
+        inst_ima = st.text_input("Técnico:", "",key= f"inst-ima-{local}")
+        data_compra_ima = st.date_input("Data de Compra:",value=date.today(),key= f"data-compra-ima-{local}")
+        data_instalacao_ima = st.date_input("Data de Instalação:",value=date.today(),key= f"data-inst-ima-{local}")
+        temp_garantia_ima = st.number_input("Tempo de Garantia (meses):", value=3, min_value=3,key= f"garantia-ima-{local}")
     st.markdown("---")
     return opt_ima,inst_ima,data_compra_ima,data_instalacao_ima,temp_garantia_ima
 
-def expander_leitor_entrada():
+def expander_leitor_entrada(local):
     with st.expander("Leitor de Entrada", expanded=True):
         opt_leitor_entrada = st.selectbox("Leitor de Entrada", ["Cartão", "Digital", "Facial 342","Facial 671"])
-        data_compra_leitor_entrada = st.date_input("Data de Compra:",value=date.today(),key= "data-compra-entrada")
-        data_instalacao_leitor_entrada = st.date_input("Data de Instalação:",value=date.today(),key= "data-inst-entrada")
-        temp_garantia_leitor_entrada = st.number_input("Tempo de Garantia (meses):", value=3, min_value=3, key="garantia-entrada")
-        tec_leitor_entrada = st.text_input("Técnico:", "",key= "tec-entrada")
+        data_compra_leitor_entrada = st.date_input("Data de Compra:",value=date.today(),key= f"data-compra-entrada-{local}")
+        data_instalacao_leitor_entrada = st.date_input("Data de Instalação:",value=date.today(),key= f"data-inst-entrada-{local}")
+        temp_garantia_leitor_entrada = st.number_input("Tempo de Garantia (meses):", value=3, min_value=3, key=f"garantia-entrada-{local}")
+        tec_leitor_entrada = st.text_input("Técnico:", "",key= "tec-entrada-{local}")
         if opt_leitor_entrada in ["Facial 342","Facial 671"]:
-            ip_leitor_entrada = st.text_input("IP:", "",key="ip-entrada")
-            mascara_leitor_entrada = st.text_input("Máscara de Sub-rede:", "",key="mascara-entrada")
-            gateway_leitor_entrada = st.text_input("Gateway:", "",key="gateway-entrada")
+            ip_leitor_entrada = st.text_input("IP:", "",key=f"ip-entrada-{local}")
+            mascara_leitor_entrada = st.text_input("Máscara de Sub-rede:", "",key=f"mascara-entrada-{local}")
+            gateway_leitor_entrada = st.text_input("Gateway:", "",key=f"gateway-entrada-{local}")
         else:
             ip_leitor_entrada = ""
             mascara_leitor_entrada = ""
@@ -325,17 +325,17 @@ def expander_leitor_entrada():
     st.markdown("---")
     return opt_leitor_entrada,tec_leitor_entrada,temp_garantia_leitor_entrada,data_compra_leitor_entrada,data_instalacao_leitor_entrada,ip_leitor_entrada,mascara_leitor_entrada,gateway_leitor_entrada
 
-def expander_leitor_saida():
+def expander_leitor_saida(local):
     with st.expander("Leitor de Saída", expanded=True):
         opt_leitor_saida = st.selectbox("Leitor de Saída", ["Botoeira", "Cartão", "Digital", "Facial 342","Facial 671"])
-        data_compra_leitor_saida = st.date_input("Data de Compra:",value=date.today(),key= "data-compra-saida")
-        data_instalacao_leitor_saida = st.date_input("Data de Instalação:",value=date.today(),key= "data-inst-saida")
-        temp_garantia_leitor_saida = st.number_input("Tempo de Garantia (meses):", value=3, min_value=3, key="garantia-saida")
-        tec_leitor_saida = st.text_input("Técnico:", "", key="tec-saida")
+        data_compra_leitor_saida = st.date_input("Data de Compra:",value=date.today(),key= f"data-compra-saida-{local}")
+        data_instalacao_leitor_saida = st.date_input("Data de Instalação:",value=date.today(),key= f"data-inst-saida-{local}")
+        temp_garantia_leitor_saida = st.number_input("Tempo de Garantia (meses):", value=3, min_value=3, key=f"garantia-saida-{local}")
+        tec_leitor_saida = st.text_input("Técnico:", "", key=f"tec-saida-{local}")
         if opt_leitor_saida in ["Facial 342","Facial 671"]:
-            ip_leitor_saida = st.text_input("IP do Leitor de Saída:", "", key="ip-saida")
-            mascara_leitor_saida = st.text_input("Máscara de Sub-rede:", "", key="mascara-saida")
-            gateway_leitor_saida = st.text_input("Gateway do Leitor de Saída:", "", key="gateway-saida")
+            ip_leitor_saida = st.text_input("IP do Leitor de Saída:", "", key=f"ip-saida-{local}")
+            mascara_leitor_saida = st.text_input("Máscara de Sub-rede:", "", key=f"mascara-saida-{local}")
+            gateway_leitor_saida = st.text_input("Gateway do Leitor de Saída:", "", key=f"gateway-saida-{local}")
         else:
             ip_leitor_saida = ""
             mascara_leitor_saida = ""
@@ -372,58 +372,74 @@ def seta_rede_leitor(leitor:Leitor,ip,mascara,gateway):
     leitor.setGateway(gateway)
 
 def opcao_porta():
+    def registraPorta(andar:Andar):
+        nome = st.text_input("Local:", "",key= "local-porta")
+        #Seção Botoeira
+        opt_botoeira,tec_bot,data_compra_bot,data_instalacao_bot,temp_garantia_bot = expander_botoeira(nome)
+        #Seção Imã
+        opt_ima,inst_ima,data_compra_ima,data_instalacao_ima,temp_garantia_ima = expander_ima(nome)
+        #Seção Leitor de Entrada
+        opt_leitor_entrada,tec_leitor_entrada,temp_garantia_leitor_entrada,data_compra_leitor_entrada,data_instalacao_leitor_entrada,ip_leitor_entrada,mascara_leitor_entrada,gateway_leitor_entrada = expander_leitor_entrada(nome)
+        #Seção Leitor de Saida
+        opt_leitor_saida,tec_leitor_saida,temp_garantia_leitor_saida,data_compra_leitor_saida,data_instalacao_leitor_saida,ip_leitor_saida,mascara_leitor_saida,gateway_leitor_saida = expander_leitor_saida(nome)
+        #Cria dicionarios de modelos
+        botoeiras, imas, leitores = cria_dicionario_de_modelos(data_instalacao_bot=data_instalacao_bot,
+                                                                data_compra_bot=data_compra_bot,
+                                                                temp_garantia_bot=temp_garantia_bot,
+                                                                tec_bot=tec_bot,
+                                                                inst_ima=inst_ima,
+                                                                temp_garantia_ima=temp_garantia_ima,
+                                                                data_compra_ima=data_compra_ima,
+                                                                data_instalacao_ima=data_instalacao_ima,
+                                                                tec_leitor_entrada=tec_leitor_entrada,
+                                                                temp_garantia_leitor_entrada=temp_garantia_leitor_entrada,
+                                                                data_compra_leitor_entrada=data_compra_leitor_entrada,
+                                                                data_instalacao_leitor_entrada=data_instalacao_leitor_entrada,
+                                                                nome=nome)
+        
+        botoeira = botoeiras[opt_botoeira]
+        ima = imas[opt_ima]
+        leitor_entrada = leitores[opt_leitor_entrada]
+        leitor_saida = leitores[opt_leitor_saida]
+        leitor_saida._setCompra(data_compra_leitor_saida)
+        leitor_saida._setInstalador(tec_leitor_saida)
+        leitor_saida._setInstalacao(data_instalacao_leitor_saida)
+        leitor_saida._setTempGarantia(temp_garantia_leitor_saida)
+
+        #Seta paremetros de rede nos leitores
+        seta_rede_leitor(leitor_entrada,ip_leitor_entrada,mascara_leitor_entrada,gateway_leitor_entrada)
+        seta_rede_leitor(leitor_saida,ip_leitor_saida,mascara_leitor_saida,gateway_leitor_saida)
+        
+        try:
+            nome_reg = nome
+            if st.button("Criar Porta"):
+                porta = Porta(nome=nome_reg, botoeira_emerg=botoeira, ima=ima, leitor_entrada=leitor_entrada, leitor_saida=leitor_saida)
+                st.success("Porta criada com sucesso!")
+                andar.criaPorta(porta)
+                salvaClientes(df_clientes)
+        except Exception as e:
+            st.error(f"Erro ao criar porta: {e}")
+
     st.title("Registra Porta")
     andar = selecionaAndar()
-    nome = st.text_input("Local:", "",key= "local-porta")
-    #Seção Botoeira
-    opt_botoeira,tec_bot,data_compra_bot,data_instalacao_bot,temp_garantia_bot = expander_botoeira()
-    #Seção Imã
-    opt_ima,inst_ima,data_compra_ima,data_instalacao_ima,temp_garantia_ima = expander_ima()
-    #Seção Leitor de Entrada
-    opt_leitor_entrada,tec_leitor_entrada,temp_garantia_leitor_entrada,data_compra_leitor_entrada,data_instalacao_leitor_entrada,ip_leitor_entrada,mascara_leitor_entrada,gateway_leitor_entrada = expander_leitor_entrada()
-    #Seção Leitor de Saida
-    opt_leitor_saida,tec_leitor_saida,temp_garantia_leitor_saida,data_compra_leitor_saida,data_instalacao_leitor_saida,ip_leitor_saida,mascara_leitor_saida,gateway_leitor_saida = expander_leitor_saida()
-    #Cria dicionarios de modelos
-    botoeiras, imas, leitores = cria_dicionario_de_modelos(data_instalacao_bot=data_instalacao_bot,
-                                                            data_compra_bot=data_compra_bot,
-                                                            temp_garantia_bot=temp_garantia_bot,
-                                                            tec_bot=tec_bot,
-                                                            inst_ima=inst_ima,
-                                                            temp_garantia_ima=temp_garantia_ima,
-                                                            data_compra_ima=data_compra_ima,
-                                                            data_instalacao_ima=data_instalacao_ima,
-                                                            tec_leitor_entrada=tec_leitor_entrada,
-                                                            temp_garantia_leitor_entrada=temp_garantia_leitor_entrada,
-                                                            data_compra_leitor_entrada=data_compra_leitor_entrada,
-                                                            data_instalacao_leitor_entrada=data_instalacao_leitor_entrada,
-                                                            nome=nome)
-    
-    botoeira = botoeiras[opt_botoeira]
-    ima = imas[opt_ima]
-    leitor_entrada = leitores[opt_leitor_entrada]
-    leitor_saida = leitores[opt_leitor_saida]
-    leitor_saida._setCompra(data_compra_leitor_saida)
-    leitor_saida._setInstalador(tec_leitor_saida)
-    leitor_saida._setInstalacao(data_instalacao_leitor_saida)
-    leitor_saida._setTempGarantia(temp_garantia_leitor_saida)
+    if not andar.getPortas(): #Se não existe porta registrada
+        registraPorta(andar)
+    else:
+        portas = list(andar.getPortas().keys())
+        if "Nova Porta" not in andar.getPortas().keys():
+            portas.append("Nova Porta")
+        if "Nova Porta" in andar.getPortas().keys():
+            portas.remove("Nova Porta")
+            portas.append("Nova Porta")
+        opt_porta = st.selectbox("Escolha a porta:", portas)
+        if opt_porta == "Nova Porta":
+            registraPorta(andar)
+        else:
+            st.write(andar.getPortas()[opt_porta])
 
-    #Seta paremetros de rede nos leitores
-    seta_rede_leitor(leitor_entrada,ip_leitor_entrada,mascara_leitor_entrada,gateway_leitor_entrada)
-    seta_rede_leitor(leitor_saida,ip_leitor_saida,mascara_leitor_saida,gateway_leitor_saida)
-    
-    try:
-        nome_reg = nome
-        if st.button("Criar Porta", on_click=limpa_formulario_porta):
-            porta = Porta(nome=nome_reg, botoeira_emerg=botoeira, ima=ima, leitor_entrada=leitor_entrada, leitor_saida=leitor_saida)
-            st.success("Porta criada com sucesso!")
-            andar.criaPorta(porta)
-            salvaClientes(df_clientes)
-    except Exception as e:
-        st.error(f"Erro ao criar porta: {e}")
 
 def opcao_controladora():
-    andar = selecionaAndar()
-    if not andar.getControladoras():
+    def registra_controladora(andar:Andar):
         st.title("Controladora")
         local = st.text_input("Local:", "", key= "local-ctrl")
         nome = st.text_input("Nome:", "", key= "nome-ctrl")
@@ -438,7 +454,6 @@ def opcao_controladora():
         temp_garantia = st.number_input("Tempo de Garantia (meses):", min_value=3, key= "garantia-ctrl")
         
         local_reg,nome_reg,marca_reg,modelo_reg,ip_reg,mascara_reg,gateway_reg,tec_reg,data_compra_reg,data_instalacao_reg,temp_garantia_reg = local,nome,marca,modelo,ip,mascara,gateway,tec,data_compra,data_instalacao,temp_garantia
-
 
         if st.button("Criar Controladora"):
             try:
@@ -462,9 +477,17 @@ def opcao_controladora():
                 salvaClientes(df_clientes)
             except Exception as e:
                 st.error(f"Erro ao criar controladora: {e}")
+    andar = selecionaAndar()
+    if not andar.getControladoras():
+        registra_controladora(andar)
     else: #Se existe controladoras registradas
-        opt_controladora = st.selectbox("Escolha a controladora:", andar.getControladoras().keys())
-        st.write(andar.getControladoras()[opt_controladora])
+        controladoras = list(andar.getControladoras().keys())
+        controladoras.append("Nova Controladora")
+        opt_controladora = st.selectbox("Escolha a controladora:", controladoras)
+        if opt_controladora == "Nova Controladora":
+            registra_controladora(andar)
+        else:
+            st.write(andar.getControladoras()[opt_controladora])
 
 #-----------------------------------------------------------------------------------------------
 #                                Inicio da Aplicação Streamlit

@@ -698,3 +698,5 @@ class Controladora(FonteTimer,Equipamento):
         else:
             return False
 
+    def __str__(self):
+        return self.__dict__.__str__()
