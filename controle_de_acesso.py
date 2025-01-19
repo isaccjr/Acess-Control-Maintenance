@@ -163,7 +163,10 @@ class Equipamento:
     
     def reinstalacao(self,instalador,local,data,tensao=None):
         """Método para registrar uma reinstalação do equipamento"""
-        self._data_instalacao = datetime.strptime(data, "%d-%m-%Y")
+        if isinstance(data,str):
+            self._data_instalacao = datetime.strptime(data, "%d-%m-%Y")
+        elif isinstance(data,datetime):
+            self._data_instalacao = data
         self._setInstalador(instalador)
         self._setLocal(local)
         if tensao:
@@ -176,7 +179,10 @@ class Equipamento:
         \n*Data da manutenção no formato dd-mm-aa
         \n*Descrição do defeito se há algum
         """
-        self._data_ultima_manutencao = datetime.strptime(data, "%d-%m-%Y")
+        if isinstance(data,str):
+            self._data_ultima_manutencao = datetime.strptime(data, "%d-%m-%Y")
+        if isinstance(data,datetime):
+            self._data_ultima_manutencao = data
         self._tec_ultima_manutencao = tec
         if defeito:
             self._setUltimoDefeito(self.getDataUltimaManutencao(),defeito)
@@ -545,12 +551,18 @@ class Porta:
                  botoeira_emerg:BotoeiraEmergencia,
                  ima:Ima,
                  leitor_entrada:Leitor,
-                 leitor_saida:Leitor=None):
+                 leitor_saida:Leitor=None,
+                 fonte_timer:FonteTimer=None):
         self._nome = nome
         self._botoeira_emerg = botoeira_emerg
         self._ima = ima
         self._leitor_entrada = leitor_entrada
         self._leitor_saida = leitor_saida
+        if fonte_timer:
+            self._fonte_timer = fonte_timer
+        else:
+            self._fonte_timer = "Não tem fonte timer"
+    
 
     def getNome(self)->str:
         """Retorna nome da porta"""
@@ -594,9 +606,26 @@ class Porta:
         Recebe objeto leitor
         """
         self._leitor_entrada = leitor
+    def getFonteTimer(self)->FonteTimer:
+        """Retorna objeto Fonte Timer"""
+        try:
+            return self._fonte_timer
+        except:
+            return "Não tem fonte timer"
+    def _setFonteTimer(self,fonte_timer:FonteTimer):
+        """Define Fonte Timer
+        \nRecebe objeto Fonte Timer
+        """
+        if isinstance(fonte_timer,FonteTimer):
+            self._fonte_timer = fonte_timer
+            return True
+        else:
+            return False
+    def getFonteTimer(self):
+        return self._fonte_timer
+
     def __str__(self):
         return self.__dict__.__str__()
-
 
 class Controladora(FonteTimer,Equipamento):
     """Classe Controladora

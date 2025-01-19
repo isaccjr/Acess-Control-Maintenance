@@ -287,6 +287,16 @@ def opcao_cliente():
                         if st.button('REGISTRAR CONTROLADORA', use_container_width=True):
                             pass
 
+def expander_fonte_timer(local):
+    with st.expander("Fonte Timer", expanded=True):
+        opt_fonte_timer = st.selectbox("Fonte Timer", ["Padrão"])
+        tec_fonte_timer = st.text_input("Técnico:", "",key=f"tec-fonte-timer-{local}")
+        data_compra_fonte_timer = st.date_input("Data de Compra:", value=date.today(), key=f"data-compra-fonte-timer-{local}")
+        data_instalacao_fonte_timer = st.date_input("Data de Instalação:", value=date.today(), key=f"data-inst-fonte-timer-{local}")
+        temp_garantia_fonte_timer = st.number_input("Tempo de Garantia (meses):", value=3, min_value=3, key=f"garantia-fonte-timer-{local}")
+    st.markdown("---")
+    return opt_fonte_timer,tec_fonte_timer,data_compra_fonte_timer,data_instalacao_fonte_timer,temp_garantia_fonte_timer
+
 def expander_botoeira(local):
     with st.expander("Botoeira de Emergência", expanded=True):
         opt_botoeira = st.selectbox("Botoeira de Emergência", ["Padrão"])
@@ -343,7 +353,20 @@ def expander_leitor_saida(local):
     st.markdown("---")
     return opt_leitor_saida,tec_leitor_saida,temp_garantia_leitor_saida,data_compra_leitor_saida,data_instalacao_leitor_saida,ip_leitor_saida,mascara_leitor_saida,gateway_leitor_saida
 
-def cria_dicionario_de_modelos(data_instalacao_bot,data_compra_bot,temp_garantia_bot,tec_bot,inst_ima,temp_garantia_ima,data_compra_ima,data_instalacao_ima,tec_leitor_entrada,temp_garantia_leitor_entrada,data_compra_leitor_entrada,data_instalacao_leitor_entrada,nome):
+def cria_dicionario_de_modelos(data_instalacao_fonte_timer,data_compra_fonte_timer,temp_garantia_fonte_timer,tec_fonte_timer,
+                               data_instalacao_bot,data_compra_bot,temp_garantia_bot,tec_bot,
+                               inst_ima,temp_garantia_ima,data_compra_ima,data_instalacao_ima,
+                               tec_leitor_entrada,temp_garantia_leitor_entrada,data_compra_leitor_entrada,data_instalacao_leitor_entrada,
+                               nome):
+    
+    fonte_timer = {"Padrão": FonteTimer(marca="IPEC",
+                                        tec=tec_fonte_timer,
+                                        modelo="A2070",
+                                        data_instalacao=data_instalacao_fonte_timer,
+                                        data_compra=data_compra_fonte_timer,
+                                        temp_garantia=temp_garantia_fonte_timer,
+                                        local=nome)}
+    
     botoeiras = {"Padrão":BotoeiraEmergencia(marca="Intelbras",
                                             modelo = "AS 2010",
                                             local=nome,
@@ -364,7 +387,8 @@ def cria_dicionario_de_modelos(data_instalacao_bot,data_compra_bot,temp_garantia
                                         temp_garantia_leitor_entrada=temp_garantia_leitor_entrada,
                                         data_compra_leitor_entrada=data_compra_leitor_entrada,
                                         data_instalacao_leitor_entrada=data_instalacao_leitor_entrada)
-    return botoeiras,imas,leitores
+    
+    return fonte_timer,botoeiras,imas,leitores
 
 def seta_rede_leitor(leitor:Leitor,ip,mascara,gateway):
     leitor.setIp(ip)
@@ -374,6 +398,7 @@ def seta_rede_leitor(leitor:Leitor,ip,mascara,gateway):
 def opcao_porta():
     def registraPorta(andar:Andar):
         nome = st.text_input("Local:", "",key= "local-porta")
+        opt_fonte_timer,tec_fonte_timer,data_compra_fonte_timer,data_instalacao_fonte_timer,temp_garantia_fonte_timer = expander_fonte_timer(nome)
         #Seção Botoeira
         opt_botoeira,tec_bot,data_compra_bot,data_instalacao_bot,temp_garantia_bot = expander_botoeira(nome)
         #Seção Imã
@@ -383,24 +408,33 @@ def opcao_porta():
         #Seção Leitor de Saida
         opt_leitor_saida,tec_leitor_saida,temp_garantia_leitor_saida,data_compra_leitor_saida,data_instalacao_leitor_saida,ip_leitor_saida,mascara_leitor_saida,gateway_leitor_saida = expander_leitor_saida(nome)
         #Cria dicionarios de modelos
-        botoeiras, imas, leitores = cria_dicionario_de_modelos(data_instalacao_bot=data_instalacao_bot,
+        fonte_timer, botoeiras, imas, leitores = cria_dicionario_de_modelos(
+                                                                #fonte timer
+                                                                data_instalacao_fonte_timer=data_instalacao_fonte_timer,
+                                                                data_compra_fonte_timer=data_compra_fonte_timer,
+                                                                temp_garantia_fonte_timer=temp_garantia_fonte_timer,
+                                                                tec_bot=tec_fonte_timer,
+                                                                #botoeira
+                                                                data_instalacao_bot=data_instalacao_bot,
                                                                 data_compra_bot=data_compra_bot,
                                                                 temp_garantia_bot=temp_garantia_bot,
                                                                 tec_bot=tec_bot,
+                                                                #ima
                                                                 inst_ima=inst_ima,
                                                                 temp_garantia_ima=temp_garantia_ima,
                                                                 data_compra_ima=data_compra_ima,
                                                                 data_instalacao_ima=data_instalacao_ima,
+                                                                #leitor
                                                                 tec_leitor_entrada=tec_leitor_entrada,
                                                                 temp_garantia_leitor_entrada=temp_garantia_leitor_entrada,
                                                                 data_compra_leitor_entrada=data_compra_leitor_entrada,
                                                                 data_instalacao_leitor_entrada=data_instalacao_leitor_entrada,
                                                                 nome=nome)
-        
+        fonte_timer = fonte_timer[opt_fonte_timer]
         botoeira = botoeiras[opt_botoeira]
         ima = imas[opt_ima]
         leitor_entrada = leitores[opt_leitor_entrada]
-        leitor_saida = leitores[opt_leitor_saida]
+        leitor_saida:Leitor = leitores[opt_leitor_saida]
         leitor_saida._setCompra(data_compra_leitor_saida)
         leitor_saida._setInstalador(tec_leitor_saida)
         leitor_saida._setInstalacao(data_instalacao_leitor_saida)
@@ -413,7 +447,7 @@ def opcao_porta():
         try:
             nome_reg = nome
             if st.button("Criar Porta"):
-                porta = Porta(nome=nome_reg, botoeira_emerg=botoeira, ima=ima, leitor_entrada=leitor_entrada, leitor_saida=leitor_saida)
+                porta = Porta(nome=nome_reg, fonte_timer=fonte_timer, botoeira_emerg=botoeira, ima=ima, leitor_entrada=leitor_entrada, leitor_saida=leitor_saida)
                 st.success("Porta criada com sucesso!")
                 andar.criaPorta(porta)
                 salvaClientes(df_clientes)
@@ -436,7 +470,6 @@ def opcao_porta():
             registraPorta(andar)
         else:
             st.write(andar.getPortas()[opt_porta])
-
 
 def opcao_controladora():
     def registra_controladora(andar:Andar):
@@ -489,6 +522,134 @@ def opcao_controladora():
         else:
             st.write(andar.getControladoras()[opt_controladora])
 
+def opcao_manutencao():
+    andar = selecionaAndar()
+    col1,col2 = st.columns(2)
+    with col1: #Coluna controladora
+        controladoras = list(andar.getControladoras().keys())
+        controladoras = [controladora + " - " + andar.getControladoras()[controladora].getLocal() for controladora in controladoras]
+        if controladoras == []:
+            st.write("Não há controladora registrada nesse andar/divisão")
+        else:
+            opt_controladora = st.selectbox("Escolha a controladora:", controladoras)
+            opt_controladora = opt_controladora.split(" - ")[0]
+            if st.button("REGISTRAR MANUTENÇÃO"):
+                controladora:Controladora = andar.getControladoras()[opt_controladora]
+                form_manutencao = st.form("Manutenção")
+                with form_manutencao:
+                    tec = st.text_input("Técnico respónsavel:",key=f"tec-manutencao-{opt_controladora}")
+                    data = st.date_input("Data da manutenção:",value=date.today(),key=f"data-manutencao-{opt_controladora}")
+                    tensao_entrada = st.number_input("Tensão de entrada:",value=127,key=f"tensao-entrada-{opt_controladora}")
+                    tensao_saida = st.number_input("Tensão de saída:",value=12,key=f"tensao-saida-{opt_controladora}")
+                    defeito = st.text_input("Defeito:",key=f"defeito-{opt_controladora}")
+                    registra_manutencao_ctrl = st.form_submit_button("Registrar", key=f"registra-manutencao-ctrl-{opt_controladora}")
+                    if registra_manutencao_ctrl:
+                        controladora.manutencao(tec=tec,data=data,tensao_entrada=tensao_entrada,tensao_saida=tensao_saida,defeito=defeito)
+    #Coluna da Manutenção da Porta
+    with col2:
+        portas = list(andar.getPortas().keys()) #Lista as portas registradas
+        if portas == []: #Se não houver portas registras avisa
+            st.write("Não há portas registradas nesse andar/divisão")
+        else: #Se tiver portas mostra a seleção de portas com a lista
+            opt_porta = st.selectbox("Escolha a porta:", portas)
+            
+            if st.button("REGISTRAR MANUTENÇÃO", key=f"manutencao-porta-{opt_porta}"):
+                st.session_state.manutencao_ativa = True
+           
+            if st.session_state.get('manutencao_ativa', False): # Verifica se a manutenção está ativa
+                porta:Porta = andar.getPortas()[opt_porta]
+                tec = st.text_input("Técnico responsável:",key=f"tec-manutencao-porta-{opt_porta}")
+                data = st.date_input("Data da manutenção", key=f"data-manutencao-porta-{opt_porta}")
+                st.write("Em quais foram feito manutenção:")
+                tem_fonte_timer = isinstance(porta.getFonteTimer(),FonteTimer)
+                equipamentos_porta = ["Imã","Botoeira de Emergência","Leitor de Entrada","Leitor de Saída"]
+                if tem_fonte_timer:
+                    equipamentos_porta.extend(["Fonte Timer","Bateria da Fonte Timer"])               
+                
+                # Inicializa o estado dos checkboxes no session_state
+                for equipamento in equipamentos_porta:
+                    chave_checkbox = f"checkbox_{equipamento}_{opt_porta}"
+                    if chave_checkbox not in st.session_state:
+                        st.session_state[chave_checkbox] = False
+                    st.checkbox(equipamento, key=chave_checkbox)
+
+                if st.button("Registrar Escopo Manutenção", key=f"registra-escopo-porta-{opt_porta}"):
+                    st.session_state.escopo_manutencao_ativo = True 
+                
+                if st.session_state.get('escopo_manutencao_ativo', False): # Verifica se a manutenção está ativa  
+                    campos_defeitos = {}
+                    for equipamento in equipamentos_porta:
+                        chave_checkbox = f"checkbox_{equipamento}_{opt_porta}"
+                        if st.session_state[chave_checkbox]:
+                            chave_defeito = f"defeito_{equipamento}_{opt_porta}"
+                            label_defeito = f"Defeito no(a) {equipamento}"
+                            if chave_defeito not in st.session_state:
+                                st.session_state[chave_defeito] = ""
+                            st.text_input(label_defeito, key=chave_defeito)
+                            campos_defeitos[equipamento] = st.session_state[chave_defeito]
+                        if equipamento == "Bateria da Fonte Timer":
+                            chave_tensao = f"tensao_{equipamento}_{opt_porta}"
+                            label_tensao = "Tensão da bateria da fonte timer"
+                            if chave_tensao not in st.session_state:
+                                st.session_state[chave_tensao] = 12
+                            st.number_input(label_tensao, value=st.session_state[chave_tensao], key=chave_tensao)   
+                            campos_defeitos[equipamento] = {"tensao": st.session_state[chave_tensao],
+                                                            'defeito': st.session_state[chave_defeito]}
+                            
+                    if st.button("Registra Manutenção", key=f"registra-manutencao-porta-{opt_porta}"):
+                        for equipamento, defeito in campos_defeitos.items(): #Itera pelos defeitos registrados
+                            if equipamento == "Imã":
+                                porta.getIma().manutencao(tec=tec, data=data, defeito=defeito)
+                            elif equipamento == "Botoeira de Emergência":
+                                porta.getBotoeira_emerg().manutencao(tec=tec, data=data, defeito=defeito)
+                            elif equipamento == "Leitor de Entrada":
+                                porta.getLeitorEntrada().manutencao(tec=tec, data=data, defeito=defeito)
+                            elif equipamento == "Leitor de Saída":
+                                porta.getLeitorSaida().manutencao(tec=tec, data=data, defeito=defeito)
+                            elif equipamento == "Fonte Timer" and tem_fonte_timer:
+                                porta.getFonteTimer().manutencao(tec=tec, data=data, tensao_entrada=12, tensao_saida=12, defeito=defeito)
+                            elif equipamento == "Bateria da Fonte Timer" and tem_fonte_timer:
+                                chave_tensao = f"tensao_{equipamento}_{opt_porta}"
+                                porta.getFonteTimer().getBateria().manutencao(tec=tec, data=data, tensao=st.session_state[chave_tensao], defeito=defeito)
+                        salvaClientes(df_clientes)
+                        st.success("Manutenção registrada com sucesso!")
+                        st.session_state.manutencao_ativa = False
+                        st.session_state.escopo_manutencao_ativo = False
+                        st.rerun()
+
+                if st.button("Cancelar Manutenção", key=f"cancela-manutencao-porta-{opt_porta}"):
+                    st.session_state.manutencao_ativa = False
+                    st.session_state.escopo_manutencao_ativo = False
+                    st.rerun()
+
+def opcao_historico():
+    andar = selecionaAndar()
+    portas = list(andar.getPortas().keys()) #Lista as portas registradas
+    if portas == []: #Se não houver portas registras avisa
+        st.write("Não há portas registradas nesse andar/divisão")
+    else: #Se tiver portas mostra a seleção de portas com a lista
+        opt_porta = st.selectbox("Escolha a porta:", portas)
+        porta:Porta = andar.getPortas()[opt_porta]
+        
+        leitor_entrada:Leitor = porta.getLeitorEntrada()
+        leitor_saida:Leitor = porta.getLeitorSaida()
+        ima:Ima = porta.getIma()
+        botoeira:BotoeiraEmergencia = porta.getBotoeira_emerg()
+        equipamentos_porta = [leitor_entrada,leitor_saida,ima,botoeira]
+        if isinstance(porta.getFonteTimer(),FonteTimer):
+            fonte_timer:FonteTimer = porta.getFonteTimer()
+            bat_fonte_timer:Bateria = fonte_timer.getBateria()
+            equipamentos_porta.append(fonte_timer,bat_fonte_timer)  
+
+        for equipamento in equipamentos_porta:
+            df_historico_manutencao:pd.DataFrame = equipamento._historico_manutencao
+            st.dataframe(df_historico_manutencao)
+
+        
+
+
+
+
 #-----------------------------------------------------------------------------------------------
 #                                Inicio da Aplicação Streamlit
 #                          Pagina Inicial para escolher o que registrar 
@@ -500,7 +661,9 @@ def opcao_controladora():
 option_dict = {
     "Cliente": opcao_cliente,
     "Controladora": opcao_controladora,
-    "Porta": opcao_porta
+    "Porta": opcao_porta,
+    "Manutenção": opcao_manutencao,
+    "Histórico": opcao_historico
 }
 st.title("Controle de Acesso")
 st.sidebar.title("Opções")
