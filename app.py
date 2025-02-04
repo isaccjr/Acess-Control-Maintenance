@@ -4,6 +4,12 @@ from negocio import *
 import pandas as pd
 import pickle
 from datetime import date
+from bokeh.plotting import figure
+from bokeh.models import DatetimeTickFormatter, LinearColorMapper, ColorBar, ColumnDataSource
+from bokeh.palettes import RdYlGn, linear_palette
+import matplotlib.cm as cm
+import matplotlib
+import matplotlib.colors as mcolors
 
 def salvaClientes(df_clientes):
     with open("dados/clientes.pkl", "wb") as f:
@@ -289,7 +295,7 @@ def opcao_cliente():
 
 def expander_fonte_timer(local):
     with st.expander("Fonte Timer", expanded=True):
-        opt_fonte_timer = st.selectbox("Fonte Timer", ["Padrão"])
+        opt_fonte_timer = st.selectbox("Fonte Timer", ["Padrão","Nenhuma"])
         tec_fonte_timer = st.text_input("Técnico:", "",key=f"tec-fonte-timer-{local}")
         data_compra_fonte_timer = st.date_input("Data de Compra:", value=date.today(), key=f"data-compra-fonte-timer-{local}")
         data_instalacao_fonte_timer = st.date_input("Data de Instalação:", value=date.today(), key=f"data-inst-fonte-timer-{local}")
@@ -359,13 +365,26 @@ def cria_dicionario_de_modelos(data_instalacao_fonte_timer,data_compra_fonte_tim
                                tec_leitor_entrada,temp_garantia_leitor_entrada,data_compra_leitor_entrada,data_instalacao_leitor_entrada,
                                nome):
     
-    fonte_timer = {"Padrão": FonteTimer(marca="IPEC",
-                                        tec=tec_fonte_timer,
-                                        modelo="A2070",
-                                        data_instalacao=data_instalacao_fonte_timer,
+    bateria_padrao = Bateria(marca="Intelbras",
+                             modelo="XB 1270",
+                             local=nome,
+                             tensao_ciclo=(13.6,13.8),
+                             tensao_carregamento=(14.4,15.0),
+                             tensao=12,
+                             instalador=tec_fonte_timer,
+                             data_compra=data_compra_fonte_timer,
+                             data_instalacao=data_instalacao_fonte_timer,
+                             temp_garantia=temp_garantia_fonte_timer)
+
+    fonte_timer = {"Padrão":FonteTimer(tec=tec_fonte_timer,
                                         data_compra=data_compra_fonte_timer,
+                                        data_instalacao=data_instalacao_fonte_timer,
                                         temp_garantia=temp_garantia_fonte_timer,
-                                        local=nome)}
+                                        marca="IPEC",
+                                        modelo="A2070",
+                                        local=nome,
+                                        bateria=bateria_padrao),
+                    "Nenhuma":None}
     
     botoeiras = {"Padrão":BotoeiraEmergencia(marca="Intelbras",
                                             modelo = "AS 2010",
@@ -413,7 +432,7 @@ def opcao_porta():
                                                                 data_instalacao_fonte_timer=data_instalacao_fonte_timer,
                                                                 data_compra_fonte_timer=data_compra_fonte_timer,
                                                                 temp_garantia_fonte_timer=temp_garantia_fonte_timer,
-                                                                tec_bot=tec_fonte_timer,
+                                                                tec_fonte_timer=tec_fonte_timer,
                                                                 #botoeira
                                                                 data_instalacao_bot=data_instalacao_bot,
                                                                 data_compra_bot=data_compra_bot,
@@ -472,56 +491,120 @@ def opcao_porta():
             st.write(andar.getPortas()[opt_porta])
 
 def opcao_controladora():
-    def registra_controladora(andar:Andar):
+    """Menu controladora
+    Permite registrar controladoras e deletar e atribuir portas a controladoras
+    """
+    def get_portas_disponiveis(andar: Andar):
+        """Retorna a lista de portas disponíveis para um andar, verificando as portas já atribuídas."""
+        portas_andar = andar.getPortas()
+        portas_disponiveis = list(portas_andar.keys())
+        portas_disponiveis_copy = portas_disponiveis.copy()
+
+        controladoras = andar.getControladoras()
+        for ctrl in controladoras.values():
+            portas_controladora = ctrl.getPortas()
+            if len(portas_controladora) > 0:
+                for porta in portas_controladora.values():
+                    if porta.getNome() in portas_disponiveis_copy:
+                        portas_disponiveis_copy.remove(porta.getNome())
+
+        return portas_disponiveis_copy
+
+    def registra_controladora(andar: Andar):
         st.title("Controladora")
-        local = st.text_input("Local:", "", key= "local-ctrl")
-        nome = st.text_input("Nome:", "", key= "nome-ctrl")
-        marca = st.text_input("Marca:", "", key= "marca-ctrl")
-        modelo = st.text_input("Modelo:", "", key= "modelo-ctrl")
-        ip = st.text_input("IP:", "", key= "ip-ctrl")
-        mascara = st.text_input("Máscara de Sub-rede:", "", key= "mascara-ctrl")
-        gateway = st.text_input("Gateway:", "", key= "gateway-ctrl")
-        tec = st.text_input("Técnico:", "", key= "tec-ctrl")
-        data_compra = st.date_input("Data de Compra:", value=date.today(), key= "data-compra-ctrl")
-        data_instalacao = st.date_input("Data de Instalação:", value=date.today(), key= "data-inst-ctrl")
-        temp_garantia = st.number_input("Tempo de Garantia (meses):", min_value=3, key= "garantia-ctrl")
-        
-        local_reg,nome_reg,marca_reg,modelo_reg,ip_reg,mascara_reg,gateway_reg,tec_reg,data_compra_reg,data_instalacao_reg,temp_garantia_reg = local,nome,marca,modelo,ip,mascara,gateway,tec,data_compra,data_instalacao,temp_garantia
+        local = st.text_input("Local:", "", key="local-ctrl")
+        nome = st.text_input("Nome:", "", key="nome-ctrl")
+        marca = st.text_input("Marca:", "", key="marca-ctrl")
+        modelo = st.text_input("Modelo:", "", key="modelo-ctrl")
+        ip = st.text_input("IP:", "", key="ip-ctrl")
+        mascara = st.text_input("Máscara de Sub-rede:", "", key="mascara-ctrl")
+        gateway = st.text_input("Gateway:", "", key="gateway-ctrl")
+        tec = st.text_input("Técnico:", "", key="tec-ctrl")
+        data_compra = st.date_input("Data de Compra:", value=date.today(), key="data-compra-ctrl")
+        data_instalacao = st.date_input("Data de Instalação:", value=date.today(), key="data-inst-ctrl")
+        temp_garantia = st.number_input("Tempo de Garantia (meses):", min_value=3, key="garantia-ctrl")
+
+        local_reg, nome_reg, marca_reg, modelo_reg, ip_reg, mascara_reg, gateway_reg, tec_reg, data_compra_reg, data_instalacao_reg, temp_garantia_reg = local, nome, marca, modelo, ip, mascara, gateway, tec, data_compra, data_instalacao, temp_garantia
 
         if st.button("Criar Controladora"):
             try:
                 bateria = Bateria(marca="teste", modelo="teste", local="teste")
-                controladora = Controladora(local=local_reg, 
-                                            nome=nome_reg, 
-                                            marca=marca_reg, 
-                                            modelo=modelo_reg, 
-                                            bateria=bateria, 
-                                            portas=[], 
-                                            ip=ip_reg, 
-                                            mascara_sub_rede=mascara_reg, 
-                                            gateway=gateway_reg, 
-                                            tec=tec_reg, 
-                                            data_compra=data_compra_reg.strftime("%d-%m-%Y"), 
-                                            data_instalacao=data_instalacao_reg.strftime("%d-%m-%Y"), 
-                                            temp_garantia=temp_garantia_reg)
+                controladora = Controladora(
+                    local=local_reg,
+                    nome=nome_reg,
+                    marca=marca_reg,
+                    modelo=modelo_reg,
+                    bateria=bateria,
+                    portas={},
+                    ip=ip_reg,
+                    mascara_sub_rede=mascara_reg,
+                    gateway=gateway_reg,
+                    tec=tec_reg,
+                    data_compra=data_compra_reg.strftime("%d-%m-%Y"),
+                    data_instalacao=data_instalacao_reg.strftime("%d-%m-%Y"),
+                    temp_garantia=temp_garantia_reg,
+                )
                 st.success("Controladora criada com sucesso!")
                 st.write(controladora)
                 andar.criaControladora(controladora)
                 salvaClientes(df_clientes)
             except Exception as e:
                 st.error(f"Erro ao criar controladora: {e}")
+
+    def registra_porta_na_controladora(andar: Andar, controladora: Controladora):
+        """Função para registrar uma porta na controladora, mantendo o estado do selectbox"""
+        # Inicializa o estado das portas disponíveis, se não existir
+        if "portas_disponiveis" not in st.session_state:
+            st.session_state.portas_disponiveis = {}
+
+        if st.button("REGISTRAR PORTA", key=f"registra-porta-{controladora.getNome()}"):
+             st.session_state.portas_disponiveis[andar.getNome()] = get_portas_disponiveis(andar)
+            
+        # Obtém as portas disponíveis do estado da sessão
+        portas_disponiveis = st.session_state.portas_disponiveis.get(andar.getNome(), [])
+        
+        if not portas_disponiveis:
+            st.write("Não há portas disponíveis para serem registradas. Para registrar portas, escolha o menu Portas")
+            return
+
+        opt_porta = st.selectbox("Escolha a porta:", portas_disponiveis,
+                                 key=f"selectbox-porta-{controladora.getNome()}")
+
+        if st.button("SALVAR PORTA", key=f"salvar-porta-{controladora.getNome()}"):
+            porta = andar.getPortas()[opt_porta]
+            controladora.setPorta(porta)
+            salvaClientes(df_clientes)
+            st.success("Porta registrada com sucesso!")
+            st.session_state.portas_disponiveis[andar.getNome()] = get_portas_disponiveis(andar)
+            st.rerun()
+
     andar = selecionaAndar()
     if not andar.getControladoras():
         registra_controladora(andar)
-    else: #Se existe controladoras registradas
+    else:  # Se existem controladoras registradas
         controladoras = list(andar.getControladoras().keys())
         controladoras.append("Nova Controladora")
-        opt_controladora = st.selectbox("Escolha a controladora:", controladoras)
+        opt_controladora = st.selectbox("Escolha a controladora:", controladoras, key="selectbox-controladora")
+
         if opt_controladora == "Nova Controladora":
             registra_controladora(andar)
         else:
-            st.write(andar.getControladoras()[opt_controladora])
-
+            controladora = andar.getControladoras()[opt_controladora]
+            portas = list(controladora.getPortas().keys())
+            # Se não tem porta atrelada à controladora, permite deletar a controladora
+            if not portas:
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("DELETAR CONTROLADORA", key=f"deleta-ctrl-{controladora.getNome()}"):
+                        andar.delControladora(opt_controladora)
+                        salvaClientes(df_clientes)
+                        st.success("Controladora deletada com sucesso!")
+                        st.rerun()
+                with col2:
+                    registra_porta_na_controladora(andar=andar,controladora=controladora)
+            else:  # Se há portas atreladas à controladora
+                registra_porta_na_controladora(andar=andar,controladora=controladora)
+               
 def opcao_manutencao():
     andar = selecionaAndar()
     col1,col2 = st.columns(2)
@@ -591,7 +674,7 @@ def opcao_manutencao():
                             chave_tensao = f"tensao_{equipamento}_{opt_porta}"
                             label_tensao = "Tensão da bateria da fonte timer"
                             if chave_tensao not in st.session_state:
-                                st.session_state[chave_tensao] = 12
+                                st.session_state[chave_tensao] = 12.0
                             st.number_input(label_tensao, value=st.session_state[chave_tensao], key=chave_tensao)   
                             campos_defeitos[equipamento] = {"tensao": st.session_state[chave_tensao],
                                                             'defeito': st.session_state[chave_defeito]}
@@ -639,11 +722,62 @@ def opcao_historico():
         if isinstance(porta.getFonteTimer(),FonteTimer):
             fonte_timer:FonteTimer = porta.getFonteTimer()
             bat_fonte_timer:Bateria = fonte_timer.getBateria()
-            equipamentos_porta.append(fonte_timer,bat_fonte_timer)  
+            equipamentos_porta.extend([fonte_timer,bat_fonte_timer])  
 
         for equipamento in equipamentos_porta:
             df_historico_manutencao:pd.DataFrame = equipamento._historico_manutencao
             st.dataframe(df_historico_manutencao)
+            if isinstance(equipamento,Bateria):
+                # Cria o objeto ColumnDataSource
+                source = ColumnDataSource(data=dict(
+                    Data=df_historico_manutencao["Data"],
+                    Tensão=df_historico_manutencao["Tensão"]
+                ))
+                # Define as cores e os pontos de transição (valores de tensão)
+                colors = {
+                    12.0: '#800000',  # Vermelho vinho
+                    13.5: '#FFFF00',  # Amarelo
+                    13.6: '#00FF00',  # Verde
+                    13.7: '#008000'   # Verde escuro
+                }
+
+                # Normaliza os valores de tensão para o intervalo [0, 1]
+                min_tension = min(colors.keys())
+                max_tension = max(colors.keys())
+                normalized_colors = {}
+                for tension, color in colors.items():
+                    normalized_tension = (tension - min_tension) / (max_tension - min_tension)
+                    normalized_colors[normalized_tension] = color
+
+                # Cria a paleta de cores interpolada (usando os valores normalizados)
+                color_list = []
+                for value in sorted(normalized_colors.keys()):
+                    color_list.append((value, normalized_colors[value]))
+
+                cmap = mcolors.LinearSegmentedColormap.from_list("my_cmap", color_list)
+
+                # Converte o mapa de cores para uma paleta Bokeh
+                N = 256  # Número de cores na paleta
+                palette = [mcolors.to_hex(cmap(i / (N - 1))) for i in range(N)]
+
+                # Cria o mapa de cores com a paleta interpolada
+                color_mapper = LinearColorMapper(palette=palette, low=min_tension, high=max_tension)  # Use os valores originais (não normalizados) aqui
+
+                
+                # Cria o gráfico Bokeh
+                p = figure(title="Tensão Bateria Fonte Timer", x_axis_label="Data", y_axis_label="Tensão", x_axis_type="datetime")
+                
+                p.line("Data", "Tensão", source=source, line_width=2) 
+                p.circle("Data", "Tensão", legend_label="Medições", fill_color={'field': 'Tensão', 'transform': color_mapper}, size=8, source=source)
+                # Configurar o formato do eixo x
+                p.xaxis.formatter = DatetimeTickFormatter(days="%d-%m-%y", months="%d-%m-%y", years="%d-%m-%y")
+                
+                # Adiciona uma barra de cores ao gráfico
+                color_bar = ColorBar(color_mapper=color_mapper, location=(0, 0))
+                p.add_layout(color_bar, 'right')
+
+                st.bokeh_chart(p,use_container_width=True)
+
 
         
 

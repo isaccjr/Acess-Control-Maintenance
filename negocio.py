@@ -6,7 +6,17 @@ from controle_de_acesso import Controladora
 class Andar:
     def __init__(self, nome:str,portas:dict[str,Porta],controladoras:dict[str,Controladora]):
         self._nome = nome
+        if not isinstance(portas,dict):
+            raise TypeError("As portas devem ser passadas em um dicionário")
+        for porta in portas:
+            if not isinstance(porta,Porta):
+                raise TypeError("As portas devem ser do tipo Porta")
         self._portas = portas
+        if not isinstance(controladoras,dict):
+            raise TypeError("As controladoras devem ser passadas em um dicionário")
+        for controladora in controladoras:
+            if not isinstance(controladora,Controladora):
+                raise TypeError("As controladoras devem ser do tipo Controladora")
         self._controladoras = controladoras
 
 
@@ -29,12 +39,19 @@ class Andar:
             self._controladoras[controladora.getNome()] = controladora
         else:
             raise TypeError("O argumento deve ser do tipo Controladora")
+
+    def delControladora(self,nome):
+        try:
+            del self._controladoras[nome]
+            return True
+        except:
+            return False
         
     def getControladoras(self):
         return self._controladoras
 
     def __str__(self):
-        return self._nome
+        return self.__dict__.__str__()
 
 class Instalacoes:
     def __init__(self,nome:str,endereco:str,gps:tuple[float,float],andares:dict[str,Andar]):
@@ -79,7 +96,7 @@ class Instalacoes:
             return False
     
     def __str__(self):
-        return self._nome
+        return self.__dict__.__str__()
         
 class Cliente:
     def __init__(self, nome:str, responsavel:str, tel:str, instalacoes:dict[str,Instalacoes]):
@@ -123,5 +140,5 @@ class Cliente:
         return self._instalacoes
 
     def __str__(self):
-        return self._nome
+        return self.__dict__.__str__()
 

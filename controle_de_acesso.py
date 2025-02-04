@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 import pandas as pd
 import re
@@ -46,7 +46,7 @@ class Equipamento:
         if data_instalacao:
             if isinstance(data_instalacao,str):
                 self._data_instalacao = datetime.strptime(data_instalacao, "%d-%m-%Y")
-            elif isinstance(data_instalacao,datetime):
+            elif isinstance(data_instalacao,datetime) or isinstance(data_instalacao,date):
              self._data_instalacao = data_instalacao
         else:
             self._data_instalacao = None
@@ -54,7 +54,7 @@ class Equipamento:
         if data_compra:
             if isinstance(data_compra,str):
                 self._data_compra = datetime.strptime(data_compra, "%d-%m-%Y")
-            elif isinstance(data_compra,datetime):
+            elif isinstance(data_compra,datetime) or isinstance(data_compra,date):
                 self._data_compra = data_compra
         else:
             self._data_compra = None
@@ -303,7 +303,7 @@ Tensão de Carregamento: {self.getTensaoCarregamento()}"""
         """
         if isinstance(data,str):
             self._data_ultima_manutencao = datetime.strptime(data, "%d-%m-%Y")
-        elif isinstance(data,datetime):
+        elif isinstance(data,datetime) or isinstance(data,date):
             self._data_ultima_manutencao = data
 
         self._tec_ultima_manutencao = tec
@@ -374,10 +374,10 @@ class FonteTimer(Equipamento):
             if self.getTensaoSaida() > self.getBateria().getTensaoCarregamento()[1]: #Se a tensão da fonte timer esta acima da tensão de carregamento da bateria
                 defeito += f"\n Tensão da fonte timer acima da tensão de carregamento da bateria"
         
-        tensao_ref = self.getTensao(self)
-        tensao_medida = self.getUltimaTensaoEntrada(self)
+        tensao_ref = self.getTensao()
+        tensao_medida = self.getUltimaTensaoEntrada()
         if tensao_ref - tensao_medida > (tensao_ref*0.07) : #Queda de tensão maxima permitida pela NBR5410
-            defeito=f"\n Tensão de entrada ({tensao_medida} V) abaixo de {self.getTensao(self)*0.93}V (-7% do previsto)"
+            defeito=f"\n Tensão de entrada ({tensao_medida} V) abaixo de {self.getTensao()*0.93}V (-7% do previsto)"
         super().manutencao(tec=tec,data=data,defeito=defeito)
 
 def valida_ipv4(ip:str):
@@ -554,14 +554,36 @@ class Porta:
                  leitor_saida:Leitor=None,
                  fonte_timer:FonteTimer=None):
         self._nome = nome
-        self._botoeira_emerg = botoeira_emerg
-        self._ima = ima
-        self._leitor_entrada = leitor_entrada
-        self._leitor_saida = leitor_saida
-        if fonte_timer:
-            self._fonte_timer = fonte_timer
+
+        if isinstance(botoeira_emerg,BotoeiraEmergencia):
+            self._botoeira_emerg = botoeira_emerg
         else:
-            self._fonte_timer = "Não tem fonte timer"
+            raise TypeError("O argumento botoeira_emerg deve ser do tipo BotoeiraEmergencia")
+        
+        if isinstance(ima,Ima):
+            self._ima = ima
+        else:
+            raise TypeError("O argumento ima deve ser do tipo Ima")
+        
+        if isinstance(leitor_entrada,Leitor):
+            self._leitor_entrada = leitor_entrada
+        else:
+            raise TypeError("O argumento leitor_entrada deve ser do tipo Leitor")
+        
+        if isinstance(leitor_saida,Leitor) or leitor_saida is None:
+            self._leitor_saida = leitor_saida
+        else:
+            raise TypeError("O argumento leitor_saida deve ser do tipo Leitor")
+        
+        if isinstance(fonte_timer,FonteTimer) or fonte_timer is None:
+            if fonte_timer:
+                self._fonte_timer = fonte_timer
+            else:
+                self._fonte_timer = "Não tem fonte timer"
+        else:
+            raise TypeError("O argumento fonte_timer deve ser do tipo FonteTimer ou None")
+        
+        
     
 
     def getNome(self)->str:
@@ -622,7 +644,12 @@ class Porta:
         else:
             return False
     def getFonteTimer(self):
-        return self._fonte_timer
+        """Retorna Fonte Timer"""
+        try:
+            return self._fonte_timer
+        except:
+            return "Não tem fonte timer"
+        
 
     def __str__(self):
         return self.__dict__.__str__()
@@ -641,7 +668,7 @@ class Controladora(FonteTimer,Equipamento):
                  marca:str,
                  modelo:str,
                  bateria:Bateria,
-                 portas:list,
+                 portas:dict,
                  ip:str,
                  mascara_sub_rede:str,
                  gateway:str,
@@ -651,6 +678,7 @@ class Controladora(FonteTimer,Equipamento):
                  data_instalacao=None,
                  temp_garantia=None,
                  data_compra=None,
+                 quant_portas=4,
                  ):
         
         FonteTimer.__init__(self=self,
@@ -665,21 +693,39 @@ class Controladora(FonteTimer,Equipamento):
                          temp_garantia=temp_garantia,
                          tec=tec)
         EquipamentoDeRede.__init__(self,ip=ip,mascara_sub_rede=mascara_sub_rede,gateway=gateway)
-        self._portas = portas
+        if not isinstance(portas,dict):
+            raise TypeError("As portas devem ser passadas em um dicionário")
+        for porta in portas:
+            if not isinstance(porta,Porta):
+                raise TypeError("As portas devem ser do tipo Porta")
+        if len(portas) <= quant_portas:
+            self._portas = portas
+        else:
+            raise ValueError("A quantidade de portas passadas deve ser igual ou menor ao definido em quant_portas")
         self._nome = nome
         self._data_ultima_manutencao = self._data_instalacao
+        self._portas_restantes = quant_portas - len(portas)
+
 
     def getNome(self)->str:
         return self._nome
     def setNome(self,nome:str):
         self._nome = nome
 
-    def getPortas(self)->list[Porta]:
+    def getPortas(self)->dict[Porta]:
         """Retorna lista de portas"""
         return self._portas
-    def setPortas(self,porta:Porta,indice):
+    def getPorta(self,nome:str)->Porta:
+        return self._portas[nome]
+    def setPorta(self,porta:Porta):
         """Define a lista de portas da controladora."""
-        self._portas[indice] = Porta
+        if isinstance(porta,Porta):
+            self._portas[porta.getNome()] = porta
+
+            return True
+        else:
+            return False
+
 
     def getIPs(self)->list[str]:
         """ Retorna os Ips de todos os leitores"""
